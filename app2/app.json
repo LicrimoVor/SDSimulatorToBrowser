@@ -5,7 +5,7 @@
         "version": "1.2.0",
         "orientation": "portrait",
         "icon": "./assets/images/icon.png",
-        "scheme": "app2",
+        "scheme": "app",
         "userInterfaceStyle": "automatic",
         "newArchEnabled": true,
         "ios": {
@@ -34,7 +34,9 @@
                         "backgroundColor": "#000000"
                     }
                 }
-            ]
+            ],
+            "expo-font",
+            "expo-navigation-bar"
         ],
         "experiments": {
             "typedRoutes": true,

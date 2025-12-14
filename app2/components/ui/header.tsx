@@ -1,38 +1,37 @@
 import { Colors } from '@/constants/theme'
+import { Image } from 'expo-image'
 import React from 'react'
-import { StyleSheet, useColorScheme, View } from 'react-native'
+import { StyleSheet, useColorScheme } from 'react-native'
 import { ThemedText } from '../text'
+import { ThemedView } from '../view'
 
-export function Header({ isOnline }: { isOnline: boolean }) {
+export function Header() {
     const colorScheme = useColorScheme() ?? 'light'
 
     return (
-        <View
+        <ThemedView
             style={[
                 styles.headerInner,
                 { backgroundColor: Colors[colorScheme]['header'] },
             ]}
         >
-            <View
-                style={[
-                    styles.statusDot,
-                    {
-                        backgroundColor: isOnline ? '#34D399' : '#EF4444',
-                    },
-                ]}
+            <Image
+                source={require('@/assets/images/icon.png')}
+                style={{ width: 40, height: 40 }}
             />
             <ThemedText style={[styles.title]}>BrowserReader</ThemedText>
-        </View>
+        </ThemedView>
     )
 }
 
 export const styles = StyleSheet.create({
     headerInner: {
-        padding: 12,
+        padding: 4,
+        gap: 4,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    statusDot: { width: 14, height: 14, borderRadius: 6, marginRight: 8 },
     statusText: { marginRight: 12 },
     title: { fontSize: 18, fontWeight: '600' },
 })

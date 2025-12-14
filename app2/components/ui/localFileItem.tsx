@@ -8,8 +8,8 @@ import {
     useColorScheme,
     View,
 } from 'react-native'
+import { Icon } from '../icon'
 import { ThemedText } from '../text'
-import { Icon } from '../ui/icon'
 import { ThemedView } from '../view'
 
 type Props = {

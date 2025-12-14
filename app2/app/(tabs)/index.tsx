@@ -1,6 +1,8 @@
+import { Icon } from '@/components/icon'
 import { ThemedText } from '@/components/text'
-import { Icon } from '@/components/ui/icon'
+import { StatusCircle } from '@/components/ui/status'
 import { ThemedView } from '@/components/view'
+import { URL_API } from '@/constants/core'
 import { Colors } from '@/constants/theme'
 import { DATA_DIR } from '@/hooks/useLocalFiles'
 import { File } from 'expo-file-system'
@@ -14,15 +16,11 @@ import {
 } from 'react-native'
 
 
-export default function OnlinePage() {
-
-    return <OnlineFilePage />
-}
-
-function OnlineFilePage() {
+export default function OnlineFilePage() {
     const [items, setItems] = useState<any[]>([])
     const [dirs, setDirs] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
+    const [isOnline, setIsOnline] = useState(false)
     const path = useMemo(() => dirs.join('/'), [dirs])
     const theme = useColorScheme() || 'light'
 
@@ -31,46 +29,45 @@ function OnlineFilePage() {
         const query = encodeURIComponent(path)
         const url =
             dirs.length > 0
-                ? `http://192.168.1.45:8000/api/list?path=${query}`
-                : 'http://192.168.1.45:8000/api/list'
+                ? `${URL_API}/list?path=${query}`
+                : `${URL_API}/list`
 
         try {
             const res = await fetch(url)
             const json = await res.json()
             setItems(json)
+            setIsOnline(true)
         } catch (e) {
-            console.warn('Online list error:', e)
+            setIsOnline(false)
         } finally {
             setLoading(false)
         }
-    }, [path])
+    }, [dirs, setIsOnline, setLoading, path])
 
     useEffect(() => {
         loadList()
-    }, [loadList])
+    }, [path, loadList])
 
     const handleDownload = async (item: any) => {
         setLoading(true)
         const filePath = dirs.length > 0 ? path + '/' + item.name : item.name
         try {
-            const url = `http://192.168.1.45:8000/api/file?path=${encodeURIComponent(filePath)}`
+            const url = `${URL_API}/file?path=${encodeURIComponent(filePath)}`
             const output = await File.downloadFileAsync(url, DATA_DIR)
                 .then(() => setLoading(false))
                 .catch(() => setLoading(false))
         } catch (e) {
-            console.warn('Download error:', e)
+            setLoading(false)
         }
     }
 
-    const handleOpenDir = (item: any) => {
-        setDirs([...dirs, item.name])
-        loadList()
-    }
+    const handleOpenDir = useCallback((item: any) => {
+        setDirs(prev => [...prev, item.name])
+    }, [])
 
     const handleBack = useCallback(() => {
-        setDirs(dirs.slice(0, dirs.length - 1))
-        loadList()
-    }, [setDirs, dirs, loadList])
+        setDirs(prev => prev.slice(0, -1))
+    }, [])
 
     useEffect(() => {
         const subscription = BackHandler.addEventListener(
@@ -100,7 +97,7 @@ function OnlineFilePage() {
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 8,
+                        gap: 16,
                     }}
                 >
                     <TouchableOpacity onPress={handleBack}>
@@ -111,18 +108,38 @@ function OnlineFilePage() {
                             color={Colors[theme]['tint']}
                         />
                     </TouchableOpacity>
+                    <StatusCircle isActive={isOnline} />
                     <ThemedText style={{ fontWeight: '600' }}>
-                        Online files
+                        Статус: {loading ? 'Загрузка' : (isOnline ? 'Онлайн' : 'Оффлайн')}
                     </ThemedText>
+
+                    <TouchableOpacity onPress={loadList} style={{ flex: 1, alignItems: 'flex-end' }}>
+                        <Icon
+                            type="Ionicons"
+                            size={24}
+                            name={'refresh'}
+                            color={Colors[theme]['tint']}
+                        />
+                    </TouchableOpacity>
                 </ThemedView>
                 <ThemedText style={{ color: '#6B7280', marginTop: 4 }}>
-                    Path: /{path}
+                    Путь: /{path}
                 </ThemedText>
             </ThemedView>
 
+            {items.length === 0 && !loading && (
+                <ThemedView>
+                    <ThemedText style={{ textAlign: 'center' }}>
+                        Пусто
+                    </ThemedText>
+                </ThemedView>
+            )}
+
             {loading ? (
                 <ThemedView>
-                    <ThemedText>Loading...</ThemedText>
+                    <ThemedText style={{ textAlign: 'center' }}>
+                        Загрузка...
+                    </ThemedText>
                 </ThemedView>
             ) : (
                 <FlatList

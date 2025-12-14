@@ -1,10 +1,11 @@
+import { ThemedText } from '@/components/text'
 import { ThemedView } from '@/components/view'
 import { LocalFile, useLocalFiles } from '@/hooks/useLocalFiles'
 import * as Sharing from 'expo-sharing'
 import React, { useEffect, useState } from 'react'
-import { FlatList, Text } from 'react-native'
-import { LocalFileItem } from '../../components/my/localFileItem'
-import { RenameModal } from '../../components/my/renameModal'
+import { FlatList } from 'react-native'
+import { LocalFileItem } from '../../components/ui/localFileItem'
+import { RenameModal } from '../../components/ui/renameModal'
 
 export default function LocalPage() {
     const { files, loading, error, refresh: readFiles } = useLocalFiles()
@@ -54,7 +55,9 @@ export default function LocalPage() {
                 keyExtractor={(item) => item.name}
                 contentContainerStyle={{ padding: 12 }}
                 ListEmptyComponent={
-                    <Text style={{ textAlign: 'center' }}>No local files.</Text>
+                    <ThemedText style={{ textAlign: 'center' }}>
+                        Локальных файлов нет.
+                    </ThemedText>
                 }
                 renderItem={({ item }) => (
                     <LocalFileItem
