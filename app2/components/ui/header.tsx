@@ -16,8 +16,8 @@ export function Header() {
             ]}
         >
             <Image
-                source={require('@/assets/images/icon.png')}
-                style={{ width: 40, height: 40 }}
+                source={require('@/assets/images/big.png')}
+                style={{ width: 30, height: 28 }}
             />
             <ThemedText style={[styles.title]}>BrowserReader</ThemedText>
         </ThemedView>

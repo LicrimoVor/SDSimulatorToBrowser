@@ -56,7 +56,7 @@ export default function LocalPage() {
                 contentContainerStyle={{ padding: 12 }}
                 ListEmptyComponent={
                     <ThemedText style={{ textAlign: 'center' }}>
-                        Локальных файлов нет.
+                        На МРМ нет сохраненных файлов.
                     </ThemedText>
                 }
                 renderItem={({ item }) => (

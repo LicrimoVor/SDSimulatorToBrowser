@@ -103,6 +103,11 @@ export default function OnlineFilePage() {
         return () => subscription.remove()
     }, [handleBack, dirs])
 
+    const onRefresh = () => {
+        loadList()
+        setProgress({})
+    }
+
     return (
         <ThemedView style={{ flex: 1 }}>
             <ThemedView
@@ -130,11 +135,11 @@ export default function OnlineFilePage() {
                     <StatusCircle isActive={isOnline} />
                     <ThemedText style={{ fontWeight: '600' }}>
                         Статус:{' '}
-                        {error ? 'Ошибка' : loading ? 'Загрузка' : isOnline ? 'Онлайн' : 'Оффлайн'}
+                        {error ? 'Ошибка' : loading ? 'Загрузка' : isOnline ? 'Подключено' : 'Отключено'}
                     </ThemedText>
 
                     <TouchableOpacity
-                        onPress={loadList}
+                        onPress={onRefresh}
                         style={{ flex: 1, alignItems: 'flex-end' }}
                     >
                         <Icon
@@ -174,7 +179,7 @@ export default function OnlineFilePage() {
             {items.length === 0 && !loading && (
                 <ThemedView>
                     <ThemedText style={{ textAlign: 'center' }}>
-                        Пусто
+                        Нет подключения
                     </ThemedText>
                 </ThemedView>
             )}
@@ -215,8 +220,8 @@ export default function OnlineFilePage() {
                                 </ThemedText>
                                 <ThemedText style={styles.fileMeta}>
                                     {item.isDirectory
-                                        ? 'Directory'
-                                        : `${item.size} bytes`}
+                                        ? 'Папка'
+                                        : `${item.size}`}
                                 </ThemedText>
                             </ThemedView>
 

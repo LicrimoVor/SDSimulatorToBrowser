@@ -12,7 +12,7 @@
 
 SDCard2USB dev;
 
-const char *ssid = "CDBrowser";
+const char *ssid = "Transmitter";
 // const char *password = "1q2w3e4r5t";
 IPAddress apIP(192, 168, 4, 1);
 IPAddress netMsk(255, 255, 255, 0);

@@ -20,12 +20,12 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Онлайн',
+                    title: 'Трансмиттер',
                     tabBarIcon: ({ color }) => (
                         <Icon
-                            type="Entypo"
-                            size={28}
-                            name="network"
+                            type="FontAwesome5"
+                            size={24}
+                            name="wifi"
                             color={color}
                         />
                     ),
@@ -34,7 +34,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="local"
                 options={{
-                    title: 'Локально',
+                    title: 'МРМ',
                     tabBarIcon: ({ color }) => (
                         <Icon
                             type="AntDesign"
