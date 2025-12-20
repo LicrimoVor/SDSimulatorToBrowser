@@ -5,6 +5,8 @@ import { ThemedView } from '@/components/view'
 import { URL_API } from '@/constants/core'
 import { Colors } from '@/constants/theme'
 import { DATA_DIR } from '@/hooks/useLocalFiles'
+import { parseBytes } from '@/libs/parse_bytes'
+import { File } from 'expo-file-system'
 import { createDownloadResumable } from 'expo-file-system/legacy'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -15,6 +17,7 @@ import {
     useColorScheme,
 } from 'react-native'
 import { ProgressBar } from 'react-native-paper'
+
 
 export default function OnlineFilePage() {
     const [items, setItems] = useState<any[]>([])
@@ -31,7 +34,7 @@ export default function OnlineFilePage() {
         const query = encodeURIComponent(path)
         const url =
             dirs.length > 0
-                ? `${URL_API}/list?path=/${query}`
+                ? `${URL_API}/list?path=${query}`
                 : `${URL_API}/list`
 
         try {
@@ -55,9 +58,9 @@ export default function OnlineFilePage() {
         setError(false)
         const filePath = dirs.length > 0 ? path + '/' + item.name : item.name
         try {
-            const url = `${URL_API}/file?path=/${encodeURIComponent(filePath)}`
+            const url = `${URL_API}/file?path=${encodeURIComponent(filePath)}`
             const a = DATA_DIR.uri + item.name
-            await createDownloadResumable(
+            const res = await createDownloadResumable(
                 url,
                 a,
                 {},
@@ -72,6 +75,17 @@ export default function OnlineFilePage() {
                     }
                 },
             ).downloadAsync()
+            if (!res) {
+                setError(false)
+                return
+            }
+
+            const file = new File(res.uri)
+            const oFile = await file.open()
+            const bytes = oFile.readBytes(160)
+            oFile.close()
+            parseBytes(bytes)
+
         } catch (e) { 
             setError(true)
         }

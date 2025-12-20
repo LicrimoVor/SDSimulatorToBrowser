@@ -5,10 +5,15 @@
 #include "web_server.h"
 #include "sd_utils.h"
 
-#define SD_MISO 37
-#define SD_MOSI 39
-#define SD_SCK 38
-#define SD_CS 40
+// #define SD_MISO 13
+// #define SD_MOSI 12
+// #define SD_SCK 11
+// #define SD_CS 10
+
+#define SD_MOSI 11
+#define SD_MISO 13
+#define SD_SCK 12
+#define SD_CS 10
 
 SDCard2USB dev;
 
@@ -33,6 +38,16 @@ void setupDNS()
 void setup()
 {
     Serial.begin(115200);
+
+    if (psramFound())
+    {
+        Serial.printf("PSRAM OK: %d bytes\n", ESP.getPsramSize());
+    }
+    else
+    {
+        Serial.println("PSRAM NOT FOUND");
+    }
+
     if (dev.initSD(SD_SCK, SD_MISO, SD_MOSI, SD_CS))
     {
         if (dev.begin())

@@ -1,0 +1,88 @@
+{
+    "bookmarks": [
+        {
+            "color": 1329789252,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 1,
+            "locked": true,
+            "name": "Дата (дд мм гг) [0x2C - 0x2E]",
+            "region": {
+                "address": 44,
+                "size": 3
+            }
+        },
+        {
+            "color": 1341779266,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 2,
+            "locked": true,
+            "name": "Что то в названии [0x38 - 0x39]",
+            "region": {
+                "address": 56,
+                "size": 2
+            }
+        },
+        {
+            "color": 1329789415,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 4,
+            "locked": true,
+            "name": "Км н [0x70 - 0x71]",
+            "region": {
+                "address": 112,
+                "size": 2
+            }
+        },
+        {
+            "color": 1325400319,
+            "comment": "02 00 - левая -\n01 80 - левая +\n02 20 - правая -\n01 А0 - правая +",
+            "highlightVisible": true,
+            "id": 7,
+            "locked": true,
+            "name": "Правая/Левая и +/- [0x78 - 0x79]",
+            "region": {
+                "address": 120,
+                "size": 2
+            }
+        },
+        {
+            "color": 1342177279,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 5,
+            "locked": false,
+            "name": "Конст [0x90 - 0x92]",
+            "region": {
+                "address": 144,
+                "size": 3
+            }
+        },
+        {
+            "color": 1342177279,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 6,
+            "locked": false,
+            "name": "Конст [0x64 - 0x66]",
+            "region": {
+                "address": 100,
+                "size": 3
+            }
+        },
+        {
+            "color": 1342177279,
+            "comment": "",
+            "highlightVisible": true,
+            "id": 9,
+            "locked": true,
+            "name": "Конст [0x94 - 0x95]",
+            "region": {
+                "address": 148,
+                "size": 2
+            }
+        }
+    ]
+}
