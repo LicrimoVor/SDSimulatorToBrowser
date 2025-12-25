@@ -1,4 +1,4 @@
-import { Directory, Paths } from 'expo-file-system'
+import { Directory, Paths, File } from 'expo-file-system'
 
 export const URL_API = __DEV__
     ? 'http://192.168.168.130:8000/api'
@@ -13,5 +13,3 @@ export const FILE_DIR = new Directory(Paths.document, 'data')
 if (!FILE_DIR.exists) {
     FILE_DIR.create({ intermediates: true })
 }
-
-export const PATH_DATA = 'assets/data'

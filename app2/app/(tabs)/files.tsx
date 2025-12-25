@@ -10,10 +10,7 @@ import { LocalFileItem } from '../../components/ui/localFileItem'
 import { RenameModal } from '../../components/ui/renameModal'
 
 export default function FilesPage() {
-    const {
-        files,
-        refresh: readFiles,
-    } = useLocalFiles(FILE_DIR)
+    const { files, refresh: readFiles } = useLocalFiles(FILE_DIR)
     const [fileTarget, setFileTarget] = useState<LocalFile | null>(null)
     const [isRenameModalVisible, setRenameModalVisible] = useState(false)
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false)

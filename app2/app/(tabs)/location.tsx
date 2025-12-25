@@ -1,6 +1,7 @@
 import { Status } from '@/components/status'
 import { ThemedText } from '@/components/text'
 import { DeleteModal } from '@/components/ui/deleteModal'
+import { LocationFileItem } from '@/components/ui/locationFileItem'
 import { ThemedView } from '@/components/view'
 import { LOGS_DIR } from '@/core/const'
 import { LOCATION_TASK } from '@/core/tasks'
@@ -14,70 +15,68 @@ import {
 } from 'expo-location'
 import * as Sharing from 'expo-sharing'
 import React, { useCallback, useEffect, useState } from 'react'
-import { FlatList, TouchableOpacity, useColorScheme } from 'react-native'
-import { LocalFileItem } from '../../components/ui/localFileItem'
-import { RenameModal } from '../../components/ui/renameModal'
+import {
+    ActivityIndicator,
+    FlatList,
+    TouchableOpacity,
+    useColorScheme,
+} from 'react-native'
 
 export default function LocalPage() {
-    const {
-        files,
-        loading,
-        error,
-        refresh: readFiles,
-    } = useLocalFiles(LOGS_DIR)
+    const { files, refresh: readFiles } = useLocalFiles(LOGS_DIR)
     const [fileTarget, setFileTarget] = useState<LocalFile | null>(null)
-    const [isRenameModalVisible, setRenameModalVisible] = useState(false)
+    // const [isRenameModalVisible, setRenameModalVisible] = useState(false)
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false)
     const [isLocationStarted, setIsLocationStarted] = useState(false)
-    const [writingFileName, setWritingFileName] = useState("")
+    const [writingFileName, setWritingFileName] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
     const [isError, setIsError] = useState(false)
-    const [points, setPoints] = useState<any[]>([])
     const colorScheme = useColorScheme() ?? 'light'
 
     useInitialEffect(() => {
-        (async () => {
-            setIsLocationStarted(await hasStartedLocationUpdatesAsync(LOCATION_TASK))
+        setIsLoading(true)
+        ;(async () => {
+            setIsLocationStarted(
+                await hasStartedLocationUpdatesAsync(LOCATION_TASK),
+            )
+            setIsLoading(false)
         })()
     })
 
     useEffect(() => {
         const id = setInterval(async () => {
-            setIsLocationStarted(await hasStartedLocationUpdatesAsync(LOCATION_TASK))
+            setIsLocationStarted(
+                await hasStartedLocationUpdatesAsync(LOCATION_TASK),
+            )
         }, 5_000)
         return () => clearInterval(id)
     }, [setIsLocationStarted])
 
-    // const data = await getLocationFromFile()
-    // const points = data.map((d) => ({
-    //         latitude: d.latitude,
-    //         longitude: d.longitude
-    // }))
-    // setPoints(points)
-
     const onClickHadler = useCallback(async () => {
+        if (isLoading) return
+        setIsLoading(true)
         if (await hasStartedLocationUpdatesAsync(LOCATION_TASK)) {
-            console.log("stop location")
+            console.log('stop location')
             await stopLocationUpdatesAsync(LOCATION_TASK).then(() =>
                 setIsLocationStarted(false),
             )
-            setWritingFileName("")
+            setWritingFileName('')
         } else {
             const nowDate = new Date()
             const fileName = `${nowDate.getFullYear()}.${nowDate.getMonth() + 1}.${nowDate.getDate()}.json`
             setWritingFileName(fileName)
             await startLocationRecording(fileName)
         }
-    }, [setWritingFileName, setIsLocationStarted])
+        setIsLocationStarted(
+            await hasStartedLocationUpdatesAsync(LOCATION_TASK),
+        )
+        setIsLoading(false)
+    }, [setWritingFileName, setIsLocationStarted, isLoading, setIsLoading])
 
     useEffect(() => {
         let a = setInterval(readFiles, 10_000)
         return () => clearInterval(a)
     }, [readFiles])
-
-    const handleRename = (item: LocalFile) => {
-        setFileTarget(item)
-        setRenameModalVisible(true)
-    }
 
     const handleDelete = (item: LocalFile) => {
         setFileTarget(item)
@@ -92,17 +91,22 @@ export default function LocalPage() {
         }
     }
 
-    const handleSaveRename = (newName: string) => {
-        if (!newName || !fileTarget) return
-        try {
-            fileTarget.file.rename(newName)
-        } catch (error) {
-            setIsError(true)
-        }
-        setFileTarget(null)
-        setRenameModalVisible(false)
-        readFiles()
-    }
+    // const handleRename = (item: LocalFile) => {
+    //     setFileTarget(item)
+    //     setRenameModalVisible(true)
+    // }
+
+    // const handleSaveRename = (newName: string) => {
+    //     if (!newName || !fileTarget) return
+    //     try {
+    //         fileTarget.file.rename(newName)
+    //     } catch (error) {
+    //         setIsError(true)
+    //     }
+    //     setFileTarget(null)
+    //     setRenameModalVisible(false)
+    //     readFiles()
+    // }
 
     return (
         <ThemedView style={{ flex: 1, paddingTop: 14 }}>
@@ -116,42 +120,74 @@ export default function LocalPage() {
                     </ThemedText>
                 }
                 renderItem={({ item }) => (
-                    <LocalFileItem
+                    <LocationFileItem
                         item={item}
-                        onRename={handleRename}
                         onDelete={handleDelete}
                         onShare={handleShare}
                         isSelect={item.name === writingFileName}
                     />
                 )}
             />
-            <ThemedView style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 12
-            }}>
-                <ThemedView style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <ThemedText style={{ fontWeight: 'bold', fontSize: 18, paddingRight: 16 }}>
+            <ThemedView
+                style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: 12,
+                }}
+            >
+                <ThemedView
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <ThemedText
+                        style={{
+                            fontWeight: 'bold',
+                            fontSize: 18,
+                            paddingRight: 16,
+                        }}
+                    >
                         Статус:
                     </ThemedText>
                     <ThemedView style={{ alignItems: 'center' }}>
-                        <Status isOnline={isLocationStarted} size={24} />
-                        <ThemedText>
-                            ({isLocationStarted ? 'вкл.' : 'выкл.'})
-                        </ThemedText>
-
+                        {isLoading ? (
+                            <>
+                                <ActivityIndicator size={24} />
+                                <ThemedText>Загрузка</ThemedText>
+                            </>
+                        ) : (
+                            <>
+                                <Status
+                                    isOnline={isLocationStarted}
+                                    size={24}
+                                />
+                                <ThemedText>
+                                    ({isLocationStarted ? 'вкл.' : 'выкл.'})
+                                </ThemedText>
+                            </>
+                        )}
                     </ThemedView>
                 </ThemedView>
-                <TouchableOpacity onPress={onClickHadler} style={{ alignItems: 'center', backgroundColor: Colors[colorScheme]['sideback'], padding: 12, borderRadius: 8 }}>
-                    <ThemedText style={{ fontWeight: 'bold', fontSize: 18 }}>
+                <TouchableOpacity
+                    onPress={onClickHadler}
+                    style={{
+                        alignItems: 'center',
+                        backgroundColor: Colors[colorScheme]['sideback'],
+                        padding: 12,
+                        borderRadius: 8,
+                    }}
+                >
+                    <ThemedText style={{ fontWeight: 'bold', fontSize: 20 }}>
                         {isLocationStarted
                             ? 'Остановить трекер'
                             : 'Запустить трекер'}
                     </ThemedText>
                 </TouchableOpacity>
             </ThemedView>
-            <RenameModal
+            {/* <RenameModal
                 visible={isRenameModalVisible}
                 item={fileTarget}
                 onCancel={() => {
@@ -159,7 +195,7 @@ export default function LocalPage() {
                     setFileTarget(null)
                 }}
                 onSave={handleSaveRename}
-            />
+            /> */}
             <DeleteModal
                 visible={isDeleteModalVisible}
                 onCancel={() => {
@@ -176,7 +212,6 @@ export default function LocalPage() {
                     setFileTarget(null)
                 }}
             />
-            
         </ThemedView>
     )
 }

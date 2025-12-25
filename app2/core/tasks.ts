@@ -9,6 +9,14 @@ export const LOCATION_TASK_FILENAME = 'LOCATION_TASK_FILENAME'
 export const LOCATION_TASK_TRACK_KM = 'LOCATION_TASK_POINTS'
 export const LOCATION_TASK_LAST_KM = 'LOCATION_TASK_LAST_KM'
 
+export interface LocationRecord {
+    timestamp: number
+    time_OS: number
+    latitude: number
+    longitude: number
+    km: number
+}
+
 TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
     if (error) {
         console.error('Location task error:', error)
@@ -22,7 +30,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
 
     const { locations } = data as any
     if (!locations?.length) return
-    
+
     const loc = locations[0]
     const km = coord2km(
         JSON.parse(trackKm),
@@ -30,9 +38,9 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
         loc.coords.longitude,
         // { last_km: last_km ? Number(last_km) : undefined },
     )
-    // await AsyncStorage.setItem(LOCATION_TASK_LAST_KM, String(km))
+    await AsyncStorage.setItem(LOCATION_TASK_LAST_KM, String(km))
     const time = new Date().getTime()
-    const record = {
+    const record: LocationRecord = {
         timestamp: loc.timestamp,
         time_OS: time,
         latitude: loc.coords.latitude,
@@ -40,7 +48,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
         km,
     }
     console.log(record)
-    
+
     const line = JSON.stringify(record) + '\n'
     const file = new File(LOGS_DIR.uri + fileName)
     if (!file.exists) {

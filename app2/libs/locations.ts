@@ -1,5 +1,9 @@
 import { LOGS_DIR } from '@/core/const'
-import { LOCATION_TASK, LOCATION_TASK_FILENAME } from '@/core/tasks'
+import {
+    LOCATION_TASK,
+    LOCATION_TASK_FILENAME,
+    LocationRecord,
+} from '@/core/tasks'
 import * as Location from 'expo-location'
 import { File } from 'expo-file-system'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -45,10 +49,10 @@ export async function stopLocationRecording() {
     }
 }
 
-export async function getLocationFromFile() {
+export async function getLocationFromFile(filename: string) {
     console.log('reading location')
-    const file = new File(LOGS_DIR.uri + 'location.json')
+    const file = new File(LOGS_DIR.uri + filename)
     const content = await file.text().then((text) => text.trim())
     const data = content.split('\n').map((item) => JSON.parse(item))
-    return data
+    return data as LocationRecord[]
 }

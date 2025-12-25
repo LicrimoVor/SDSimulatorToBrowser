@@ -1,3 +1,4 @@
+import { Link } from '@/components/link'
 import { Colors } from '@/core/theme'
 import { LocalFile } from '@/hooks/useLocalFiles'
 import React from 'react'
@@ -15,7 +16,6 @@ import { ThemedView } from '../view'
 type Props = {
     item: LocalFile
     isSelect?: boolean
-    onRename: any
     onDelete: any
     onShare: any
 }
@@ -34,10 +34,8 @@ function formatCustom(creationTime: number) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-// ---------- Local file item ----------
-export function LocalFileItem({
+export function LocationFileItem({
     item,
-    onRename,
     onDelete,
     onShare,
     isSelect = false,
@@ -68,9 +66,9 @@ export function LocalFileItem({
                 </Text>
             </View>
             <View style={[styles.fileActions, { gap: 20 }]}>
-                <TouchableOpacity onPress={() => onRename(item)}>
-                    <Icon type="Entypo" size={28} name="edit" color="#A8E4A0" />
-                </TouchableOpacity>
+                <Link href={`/map/${item.name}`}>
+                    <Icon type="Entypo" size={28} name="map" color="#A8E4A0" />
+                </Link>
                 <TouchableOpacity onPress={() => onShare(item)}>
                     <Icon
                         type="Entypo"

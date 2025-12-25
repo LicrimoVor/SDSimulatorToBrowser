@@ -2,6 +2,7 @@ import { Header } from '@/components/ui/header'
 import { LOCATION_TASK_TRACK_KM } from '@/core/tasks'
 import { Colors } from '@/core/theme'
 import { useInitialEffect } from '@/hooks/useInitialEffect'
+import { buildTest } from '@/libs/buildTest'
 import { buildTrackKm } from '@/libs/buildTrackKm'
 import { requestLocationPermissions } from '@/libs/locations'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -26,6 +27,7 @@ export default function RootLayout() {
         ;(async () => {
             try {
                 await requestLocationPermissions()
+                await buildTest()
                 const trackKm = await buildTrackKm()
                 await AsyncStorage.setItem(
                     LOCATION_TASK_TRACK_KM,
@@ -60,6 +62,13 @@ export default function RootLayout() {
                         <Stack.Screen
                             name="modal"
                             options={{ presentation: 'modal', title: 'Modal' }}
+                        />
+                        <Stack.Screen
+                            name="map/[filename]"
+                            options={{
+                                title: 'Modal',
+                                headerShown: false,
+                            }}
                         />
                     </Stack>
                 </SafeAreaView>

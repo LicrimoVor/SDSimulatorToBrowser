@@ -1,9 +1,5 @@
 import React from 'react'
-import {
-    Modal,
-    StyleSheet,
-    TouchableOpacity
-} from 'react-native'
+import { Modal, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '../text'
 import { ThemedView } from '../view'
 

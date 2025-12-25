@@ -1,8 +1,5 @@
-import { PATH_DATA } from '@/core/const'
 import { File, Paths } from 'expo-file-system'
 import { Asset } from 'expo-asset'
-
-const PATH_KM = PATH_DATA + '/km2coord.csv'
 
 export type Point = {
     km: number

@@ -12,7 +12,7 @@ export function Status(props: StatusProps) {
                 {
                     width: props.size || 14,
                     height: props.size || 14,
-                    borderRadius: (props.size || 14) /2,
+                    borderRadius: (props.size || 14) / 2,
                     marginRight: 8,
                     backgroundColor: props.isOnline ? '#34D399' : '#EF4444',
                 },

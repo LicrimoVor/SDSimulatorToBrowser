@@ -60,7 +60,16 @@
             [
                 "expo-asset",
                 {
-                    "assets": ["assets/data/km2coord.csv"]
+                    "assets": [
+                        "assets/data/km2coord.csv",
+                        "assets/data/test2.csv"
+                    ]
+                }
+            ],
+            [
+                "expo-font",
+                {
+                    "fonts": ["./assets/Abbieshire.ttf"]
                 }
             ]
         ],
