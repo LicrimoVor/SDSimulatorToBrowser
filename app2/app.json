@@ -8,6 +8,7 @@
         "scheme": "app",
         "userInterfaceStyle": "automatic",
         "newArchEnabled": true,
+        "assetBundlePatterns": ["assets/**/*"],
         "ios": {
             "supportsTablet": false
         },
@@ -61,8 +62,8 @@
                 "expo-asset",
                 {
                     "assets": [
-                        "assets/data/km2coord.csv",
-                        "assets/data/test2.csv"
+                        "./assets/data/km2coord.csv",
+                        "./assets/data/test2.csv"
                     ]
                 }
             ],
@@ -72,6 +73,17 @@
                     "fonts": ["./assets/Abbieshire.ttf"]
                 }
             ]
+            // [
+            //     "expo-build-properties",
+            //     {
+            //         "android": {
+            //             "compileSdkVersion": 34,
+            //             "targetSdkVersion": 34,
+            //             "buildToolsVersion": "34.0.0",
+            //             "kotlinVersion": "1.9.24"
+            //         }
+            //     }
+            // ]
         ],
         "experiments": {
             "typedRoutes": true,

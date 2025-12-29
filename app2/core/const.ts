@@ -5,11 +5,15 @@ export const URL_API = __DEV__
     : 'http://192.168.4.1:8000/api'
 
 export const LOGS_DIR = new Directory(Paths.document, 'logs')
-if (!LOGS_DIR.exists) {
-    LOGS_DIR.create({ intermediates: true })
-}
-
 export const FILE_DIR = new Directory(Paths.document, 'data')
-if (!FILE_DIR.exists) {
-    FILE_DIR.create({ intermediates: true })
+
+export async function initFileSystem() {
+  const dirs = [LOGS_DIR, FILE_DIR];
+
+  for (const dir of dirs) {
+    const info = dir.info()
+    if (!info.exists) {
+        dir.create({ intermediates: true });
+    }
+  }
 }
