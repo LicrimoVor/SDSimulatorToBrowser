@@ -43,6 +43,7 @@ export function LocalFileItem({
     isSelect = false,
 }: Props) {
     const colorScheme = useColorScheme() ?? 'light'
+    const time = item.file.creationTime || item.modified
 
     return (
         <ThemedView
@@ -60,11 +61,9 @@ export function LocalFileItem({
                 <ThemedText style={styles.fileName}>{item.name}</ThemedText>
                 <Text
                     style={styles.fileMeta}
-                >{`${item.size || '- - -'} bytes`}</Text>
+                >{`${item.size !== undefined ? item.size : '- - -'} bytes`}</Text>
                 <Text style={styles.fileMeta}>
-                    {item.file.creationTime
-                        ? formatCustom(item.file.creationTime)
-                        : '- - -'}
+                    {time ? formatCustom(time) : '- - -'}
                 </Text>
             </View>
             <View style={[styles.fileActions, { gap: 20 }]}>

@@ -61,6 +61,11 @@ export default function Map() {
             if (!trackKm) return
 
             const data = await getLocationFromFile(filename as string)
+            if (data.length === 0) {
+                setIsLoading(false)
+                return
+            }
+
             const trackPoints = data.map<Point>((d) => ({
                 lat: d.latitude,
                 lon: d.longitude,
@@ -176,80 +181,97 @@ export default function Map() {
                 </ThemedView>
             </ThemedView>
 
-            <ThemedView style={{ flex: 1, padding: 4 }}>
-                <ThemedText>{showScatter ? 'Широта' : 'Время'}</ThemedText>
-                <ThemedView style={{ flex: 1 }}>
-                    <CartesianChart
-                        domain={{
-                            x: showScatter ? undefined : minMaxKm,
-                            y: showScatter ? undefined : [0, maxTime],
-                        }}
-                        transformState={
-                            !showScatter ? undefined : transformState
-                        }
-                        chartPressState={!showScatter ? pressState : undefined}
-                        domainPadding={{
-                            left: 12,
-                            right: 24,
-                            top: 8,
-                            bottom: 0,
-                        }}
-                        data={allPoints}
-                        xKey={showScatter ? 'lon' : 'km'}
-                        yKeys={
-                            showScatter
-                                ? ['latBase', 'latTrack']
-                                : ['trackTime']
-                        }
-                        axisOptions={{
-                            lineColor: Colors[colorSchema]['text'],
-                            font,
-                            labelColor: Colors[colorSchema]['text'],
-                        }}
-                    >
-                        {({ points }) =>
-                            showScatter ? (
-                                <>
-                                    <Scatter
-                                        points={points.latBase}
-                                        color="red"
-                                        radius={1}
-                                    />
-
-                                    <Scatter
-                                        points={points.latTrack}
-                                        color="blue"
-                                        radius={1}
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    <Scatter
-                                        points={points.trackTime}
-                                        color="blue"
-                                        radius={1}
-                                    />
-
-                                    {isActive ? (
-                                        <Text
-                                            x={pressState.x.position}
-                                            y={pressState.y.trackTime.position}
-                                            font={font}
-                                            text={pressedXText}
+            {allPoints.length > 0 ? (
+                <ThemedView style={{ flex: 1, padding: 4 }}>
+                    <ThemedText>{showScatter ? 'Широта' : 'Время'}</ThemedText>
+                    <ThemedView style={{ flex: 1 }}>
+                        <CartesianChart
+                            domain={{
+                                x: showScatter ? undefined : minMaxKm,
+                                y: showScatter ? undefined : [0, maxTime],
+                            }}
+                            transformState={
+                                !showScatter ? undefined : transformState
+                            }
+                            chartPressState={
+                                !showScatter ? pressState : undefined
+                            }
+                            domainPadding={{
+                                left: 12,
+                                right: 24,
+                                top: 8,
+                                bottom: 0,
+                            }}
+                            data={allPoints}
+                            xKey={showScatter ? 'lon' : 'km'}
+                            yKeys={
+                                showScatter
+                                    ? ['latBase', 'latTrack']
+                                    : ['trackTime']
+                            }
+                            axisOptions={{
+                                lineColor: Colors[colorSchema]['text'],
+                                font,
+                                labelColor: Colors[colorSchema]['text'],
+                            }}
+                        >
+                            {({ points }) =>
+                                showScatter ? (
+                                    <>
+                                        <Scatter
+                                            points={points.latBase}
                                             color="red"
+                                            radius={1}
                                         />
-                                    ) : null}
-                                </>
-                            )
-                        }
-                    </CartesianChart>
-                    <ThemedText
-                        style={{ marginLeft: 'auto', marginRight: 'auto' }}
-                    >
-                        {showScatter ? 'Долгота' : 'Координата'}
-                    </ThemedText>
+
+                                        <Scatter
+                                            points={points.latTrack}
+                                            color="blue"
+                                            radius={1}
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Scatter
+                                            points={points.trackTime}
+                                            color="blue"
+                                            radius={1}
+                                        />
+
+                                        {isActive ? (
+                                            <Text
+                                                x={pressState.x.position}
+                                                y={
+                                                    pressState.y.trackTime
+                                                        .position
+                                                }
+                                                font={font}
+                                                text={pressedXText}
+                                                color="red"
+                                            />
+                                        ) : null}
+                                    </>
+                                )
+                            }
+                        </CartesianChart>
+                        <ThemedText
+                            style={{ marginLeft: 'auto', marginRight: 'auto' }}
+                        >
+                            {showScatter ? 'Долгота' : 'Координата'}
+                        </ThemedText>
+                    </ThemedView>
                 </ThemedView>
-            </ThemedView>
+            ) : (
+                <ThemedView
+                    style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ThemedText>Нет данных</ThemedText>
+                </ThemedView>
+            )}
         </ThemedView>
     )
 }

@@ -3,9 +3,11 @@ import { ThemedText } from '@/components/text'
 import { StatusCircle } from '@/components/ui/status'
 import { ThemedView } from '@/components/view'
 import { FILE_DIR, URL_API } from '@/core/const'
+import { useGlobalContext } from '@/core/context'
 import { Colors } from '@/core/theme'
+import { getOrCreateFile } from '@/libs/createFile'
 import { parseBytes } from '@/libs/parseBytes'
-import { Directory, File } from 'expo-file-system'
+import { Directory, File, Paths } from 'expo-file-system'
 import { createDownloadResumable } from 'expo-file-system/legacy'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -14,25 +16,30 @@ import {
     FlatList,
     StyleSheet,
     TouchableOpacity,
-    useColorScheme,
 } from 'react-native'
 import { ProgressBar } from 'react-native-paper'
 
+type FileLoader = {
+    name: string
+    progress: number
+    error?: boolean
+}
+
 export default function OnlineFilePage() {
+    const { dirs, theme } = useGlobalContext()
     const [items, setItems] = useState<any[]>([])
-    const [dirs, setDirs] = useState<string[]>([])
+    const [history, setHistory] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
-    const [progresses, setProgress] = useState<Record<string, number>>({})
+    const [progresses, setProgress] = useState<Record<string, FileLoader>>({})
     const [isOnline, setIsOnline] = useState(false)
     const [error, setError] = useState<any>(null)
-    const path = useMemo(() => dirs.join('/'), [dirs])
-    const theme = useColorScheme() || 'light'
+    const path = useMemo(() => history.join('/'), [history])
 
     const loadList = useCallback(async () => {
         setLoading(true)
         const query = encodeURIComponent(path)
         const url =
-            dirs.length > 0
+            history.length > 0
                 ? `${URL_API}/list?path=/${query}`
                 : `${URL_API}/list`
 
@@ -41,30 +48,26 @@ export default function OnlineFilePage() {
             const json = await res.json()
             setItems(json)
             setIsOnline(true)
-        } catch (e) {
+        } catch {
             setIsOnline(false)
         } finally {
             setLoading(false)
         }
-    }, [dirs, setIsOnline, setLoading, path])
+    }, [history, setIsOnline, setLoading, path])
 
     useEffect(() => {
         loadList()
     }, [path, loadList])
 
     const handleDownload = async (item: any) => {
-        let b = await Directory.pickDirectoryAsync()
-        console.log(b)
-
         setLoading(true)
         setError(false)
-        const filePath = dirs.length > 0 ? path + '/' + item.name : item.name
+        const filePath = history.length > 0 ? path + '/' + item.name : item.name
         try {
             const url = `${URL_API}/file?path=/${encodeURIComponent(filePath)}`
-            const a = FILE_DIR.uri + item.name
             const res = await createDownloadResumable(
                 url,
-                a,
+                Paths.cache.uri + '/' + item.name,
                 {},
                 ({ totalBytesWritten, totalBytesExpectedToWrite }) => {
                     if (totalBytesExpectedToWrite > 0) {
@@ -72,7 +75,10 @@ export default function OnlineFilePage() {
                             totalBytesWritten / totalBytesExpectedToWrite
                         setProgress((prev) => ({
                             ...prev,
-                            [item.name]: percent,
+                            [item.name]: {
+                                name: item.name,
+                                progress: percent,
+                            },
                         }))
                     }
                 },
@@ -86,11 +92,39 @@ export default function OnlineFilePage() {
             const oFile = await file.open()
             const bytes = oFile.readBytes(160)
             oFile.close()
-            const { dd, mm, left_rigth, km_start, id } = parseBytes(bytes)
-            file.rename(
-                `${dd.padStart(2, '0')}${mm.padStart(2, '0')}_${left_rigth}_${km_start}-${km_start}_${id}.rdm`,
-            )
+
+            let name = item.name
+            try {
+                if (item.name.endsWith('.rdm')) {
+                    const { dd, mm, left_rigth, km_start, id } =
+                        parseBytes(bytes)
+                    name = `${dd.padStart(2, '0')}${mm.padStart(2, '0')}_${left_rigth}_${km_start}-${km_start}_${id}.rdm`
+                }
+            } catch {
+                name = item.name
+                setError(true)
+            }
+
+            const dir = new Directory(dirs[FILE_DIR])
+            const info = dir.info()
+            if (info.files && info.files.includes(name)) {
+                throw Error('File already exists')
+            } else {
+                const all_bytes = await file.bytes()
+                const new_file = await getOrCreateFile(dir, name)
+                new_file.write(all_bytes)
+                console.log('file renamed success', all_bytes.length)
+            }
         } catch (e) {
+            console.log(e)
+            setProgress((prev) => ({
+                ...prev,
+                [item.name]: {
+                    name: item.name,
+                    progress: 1,
+                    error: true,
+                },
+            }))
             setError(true)
         } finally {
             setLoading(false)
@@ -98,18 +132,18 @@ export default function OnlineFilePage() {
     }
 
     const handleOpenDir = useCallback((item: any) => {
-        setDirs((prev) => [...prev, item.name])
+        setHistory((prev) => [...prev, item.name])
     }, [])
 
     const handleBack = useCallback(() => {
-        setDirs((prev) => prev.slice(0, -1))
+        setHistory((prev) => prev.slice(0, -1))
     }, [])
 
     useEffect(() => {
         const subscription = BackHandler.addEventListener(
             'hardwareBackPress',
             () => {
-                if (dirs.length > 0) {
+                if (history.length > 0) {
                     handleBack()
                     return true
                 }
@@ -118,7 +152,7 @@ export default function OnlineFilePage() {
         )
 
         return () => subscription.remove()
-    }, [handleBack, dirs])
+    }, [handleBack, history])
 
     const onRefresh = () => {
         loadList()
@@ -143,14 +177,14 @@ export default function OnlineFilePage() {
                 >
                     <TouchableOpacity
                         onPress={handleBack}
-                        disabled={dirs.length === 0}
+                        disabled={history.length === 0}
                     >
                         <Icon
                             type="Ionicons"
                             size={32}
                             name={'arrow-back'}
                             color={Colors[theme]['tint']}
-                            style={{ opacity: dirs.length === 0 ? 0.25 : 1 }}
+                            style={{ opacity: history.length === 0 ? 0.25 : 1 }}
                         />
                     </TouchableOpacity>
                     <ThemedText
@@ -171,13 +205,11 @@ export default function OnlineFilePage() {
 
                         <ThemedText>
                             (
-                            {error
-                                ? 'ошибка'
-                                : loading
-                                  ? 'загрузка'
-                                  : isOnline
-                                    ? 'подключено'
-                                    : 'отключено'}
+                            {loading
+                                ? 'загрузка'
+                                : isOnline
+                                  ? 'подключено'
+                                  : 'отключено'}
                             )
                         </ThemedText>
                     </ThemedView>
@@ -209,7 +241,12 @@ export default function OnlineFilePage() {
                     {Object.keys(progresses).map((name) => (
                         <ThemedView key={name} style={{ gap: 12 }}>
                             <ThemedText>{name}</ThemedText>
-                            <ProgressBar progress={progresses[name]} />
+                            <ProgressBar
+                                progress={progresses[name].progress}
+                                color={
+                                    progresses[name].error ? 'red' : undefined
+                                }
+                            />
                         </ThemedView>
                     ))}
                 </ThemedView>

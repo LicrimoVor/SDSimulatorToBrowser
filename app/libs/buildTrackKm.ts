@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system'
+import { File } from 'expo-file-system'
 import { Asset } from 'expo-asset'
 
 export type Point = {

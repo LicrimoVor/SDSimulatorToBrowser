@@ -1,8 +1,9 @@
 import * as TaskManager from 'expo-task-manager'
-import { File } from 'expo-file-system'
-import { LOGS_DIR } from '@/core/const'
+import { Directory, File } from 'expo-file-system'
+import { KEY_DIRS, KEY_ROOT_DIR, LOGS_DIR } from '@/core/const'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { coord2km } from '@/libs/coord2km'
+import { getOrCreateFile } from '@/libs/createFile'
 
 export const LOCATION_TASK = 'background-location-task'
 export const LOCATION_TASK_FILENAME = 'LOCATION_TASK_FILENAME'
@@ -25,8 +26,8 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
     const fileName = await AsyncStorage.getItem(LOCATION_TASK_FILENAME)
     const trackKm = await AsyncStorage.getItem(LOCATION_TASK_TRACK_KM)
     const last_km = await AsyncStorage.getItem(LOCATION_TASK_LAST_KM)
-    console.log('task start')
-    if (!fileName || !trackKm) return
+    const dirs = await AsyncStorage.getItem(KEY_DIRS)
+    if (!fileName || !trackKm || !dirs) return
 
     const { locations } = data as any
     if (!locations?.length) return
@@ -50,10 +51,8 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
     console.log(record)
 
     const line = JSON.stringify(record) + '\n'
-    const file = new File(LOGS_DIR.uri + fileName)
-    if (!file.exists) {
-        file.create({ intermediates: true })
-    }
+    const log_dir = JSON.parse(dirs)[LOGS_DIR]
+    const file = await getOrCreateFile(new Directory(log_dir), fileName)
     const content = await file.text()
 
     file.write(content + line, { encoding: 'utf8' })

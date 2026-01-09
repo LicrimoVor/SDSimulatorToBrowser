@@ -1,4 +1,4 @@
-export const parseBytes = (bytes: Uint8Array<ArrayBuffer>) => {
+export const parseBytes = (bytes: Uint8Array) => {
     const sec = bytes[0x28].toString(16)
     const min = bytes[0x29].toString(16)
     const hour = bytes[0x2a].toString(16)

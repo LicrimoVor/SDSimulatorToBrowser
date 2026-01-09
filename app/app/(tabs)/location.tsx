@@ -1,31 +1,25 @@
-import { Icon } from '@/components/icon'
 import { ThemedText } from '@/components/text'
 import { DeleteModal } from '@/components/ui/deleteModal'
 import { LocationFileItem } from '@/components/ui/locationFileItem'
 import { StatusCircle } from '@/components/ui/status'
 import { ThemedView } from '@/components/view'
 import { LOGS_DIR } from '@/core/const'
+import { useGlobalContext } from '@/core/context'
 import { LOCATION_TASK, LOCATION_TASK_FILENAME } from '@/core/tasks'
 import { Colors } from '@/core/theme'
 import { useInitialEffect } from '@/hooks/useInitialEffect'
 import { LocalFile, useLocalFiles } from '@/hooks/useLocalFiles'
-import { startLocationRecording } from '@/libs/locations'
+import { startLocationRecording, stopLocationRecording } from '@/libs/locations'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import {
-    hasStartedLocationUpdatesAsync,
-    stopLocationUpdatesAsync,
-} from 'expo-location'
+import { Directory } from 'expo-file-system'
+import { hasStartedLocationUpdatesAsync } from 'expo-location'
 import * as Sharing from 'expo-sharing'
 import React, { useCallback, useEffect, useState } from 'react'
-import {
-    ActivityIndicator,
-    FlatList,
-    TouchableOpacity,
-    useColorScheme,
-} from 'react-native'
+import { ActivityIndicator, FlatList, TouchableOpacity } from 'react-native'
 
 export default function LocalPage() {
-    const { files, refresh: readFiles } = useLocalFiles(LOGS_DIR)
+    const { dirs, theme } = useGlobalContext()
+    const { files, refresh: readFiles } = useLocalFiles()
     const [fileTarget, setFileTarget] = useState<LocalFile | null>(null)
     // const [isRenameModalVisible, setRenameModalVisible] = useState(false)
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false)
@@ -33,10 +27,10 @@ export default function LocalPage() {
     const [writingFileName, setWritingFileName] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [isError, setIsError] = useState(false)
-    const theme = useColorScheme() ?? 'light'
 
     useInitialEffect(() => {
         setIsLoading(true)
+        readFiles(new Directory(dirs[LOGS_DIR]))
         ;(async () => {
             setIsLocationStarted(
                 await hasStartedLocationUpdatesAsync(LOCATION_TASK),
@@ -49,21 +43,20 @@ export default function LocalPage() {
 
     useEffect(() => {
         const id = setInterval(async () => {
+            readFiles(new Directory(dirs[LOGS_DIR]))
             setIsLocationStarted(
                 await hasStartedLocationUpdatesAsync(LOCATION_TASK),
             )
-        }, 5_000)
+        }, 2_500)
         return () => clearInterval(id)
-    }, [setIsLocationStarted])
+    }, [setIsLocationStarted, dirs, readFiles])
 
     const onClickHadler = useCallback(async () => {
         if (isLoading) return
         setIsLoading(true)
-        if (await hasStartedLocationUpdatesAsync(LOCATION_TASK)) {
-            console.log('stop location')
-            await stopLocationUpdatesAsync(LOCATION_TASK).then(() =>
-                setIsLocationStarted(false),
-            )
+        if (await stopLocationRecording()) {
+            console.log('end location')
+            setIsLocationStarted(false)
             setWritingFileName('')
         } else {
             const nowDate = new Date()
@@ -77,11 +70,6 @@ export default function LocalPage() {
         setIsLoading(false)
     }, [setWritingFileName, setIsLocationStarted, isLoading, setIsLoading])
 
-    useEffect(() => {
-        let a = setInterval(readFiles, 10_000)
-        return () => clearInterval(a)
-    }, [readFiles])
-
     const handleDelete = (item: LocalFile) => {
         setFileTarget(item)
         setDeleteModalVisible(true)
@@ -90,53 +78,27 @@ export default function LocalPage() {
     const handleShare = async (item: LocalFile) => {
         try {
             await Sharing.shareAsync(item.file.uri)
-        } catch (_error) {
+        } catch {
             setIsError(true)
         }
     }
 
-    const onSetDirectory = async () => {
-        // try {
-        //     await startLocationRecording(writingFileName)
-        // } catch (error) {
-        //     setIsError(true)
-        // }
-    }
-
-    // const handleRename = (item: LocalFile) => {
-    //     setFileTarget(item)
-    //     setRenameModalVisible(true)
-    // }
-
-    // const handleSaveRename = (newName: string) => {
-    //     if (!newName || !fileTarget) return
-    //     try {
-    //         fileTarget.file.rename(newName)
-    //     } catch (error) {
-    //         setIsError(true)
-    //     }
-    //     setFileTarget(null)
-    //     setRenameModalVisible(false)
-    //     readFiles()
-    // }
-
     return (
         <ThemedView style={{ flex: 1, paddingTop: 14 }}>
-            <ThemedView style={{ alignItems: 'center' }}>
-                <ThemedText>
-                    {isLocationStarted ? 'Мониторинг включен' : 'Мониторинг выключен'}
-                </ThemedText>
-                <TouchableOpacity
-                    onPress={onSetDirectory}
-                    style={{ flex: 1, alignItems: 'flex-end' }}
+            <ThemedView
+                style={{
+                    alignItems: 'center',
+                    padding: 4.25,
+                }}
+            >
+                <ThemedText
+                    style={{
+                        fontWeight: '600',
+                        fontSize: 18,
+                    }}
                 >
-                    <Icon
-                        type="Octicons"
-                        size={32}
-                        name={'file-directory-symlink'}
-                        color={Colors[theme]['tint']}
-                    />
-                </TouchableOpacity>
+                    {isLocationStarted ? 'Трекер включен' : 'Трекер выключен'}
+                </ThemedText>
             </ThemedView>
 
             <FlatList
@@ -216,15 +178,6 @@ export default function LocalPage() {
                     </ThemedText>
                 </TouchableOpacity>
             </ThemedView>
-            {/* <RenameModal
-                visible={isRenameModalVisible}
-                item={fileTarget}
-                onCancel={() => {
-                    setRenameModalVisible(false)
-                    setFileTarget(null)
-                }}
-                onSave={handleSaveRename}
-            /> */}
             <DeleteModal
                 visible={isDeleteModalVisible}
                 onCancel={() => {
@@ -233,11 +186,11 @@ export default function LocalPage() {
                 }}
                 onDelete={() => {
                     setDeleteModalVisible(false)
-                    if (!fileTarget) {
+                    if (!fileTarget || !fileTarget.file.exists) {
                         return
                     }
                     fileTarget.file.delete()
-                    readFiles()
+                    readFiles(new Directory(dirs[LOGS_DIR]))
                     setFileTarget(null)
                 }}
             />

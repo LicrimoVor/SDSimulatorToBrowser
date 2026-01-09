@@ -60,7 +60,5 @@ export function coord2km(
         }
     }
 
-    console.log(bestKm, points[bestKm].km)
-
     return points[bestKm].km
 }
