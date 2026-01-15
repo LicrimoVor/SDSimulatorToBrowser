@@ -37,8 +37,10 @@ export const getOrCreateFile = async (dir: Directory, fileName: string) => {
                 .list()
                 .find(
                     (file) =>
-                         decodeURIComponent(file.uri).slice(0, -1).endsWith(fileName) ||
-                         decodeURIComponent(file.uri).endsWith(fileName),
+                        decodeURIComponent(file.uri)
+                            .slice(0, -1)
+                            .endsWith(fileName) ||
+                        decodeURIComponent(file.uri).endsWith(fileName),
                 ) as File
         }
     }

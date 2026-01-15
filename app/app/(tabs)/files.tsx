@@ -17,12 +17,13 @@ import { renameFile } from '@/libs/renameFile'
 import { shareFile } from '@/libs/share'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Directory } from 'expo-file-system'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
 import { LocalFileItem } from '../../components/ui/localFileItem'
 import { RenameModal } from '../../components/ui/renameModal'
 
-const formatDir = (dir: string) => {
+const formatDir = (dirs: string) => {
+    let dir = dirs.split('tree/')[1]
     if (dir.length > 10) {
         return dir.slice(0, 10) + '.../'
     }
@@ -37,49 +38,24 @@ export default function FilesPage() {
     const [isRenameModalVisible, setRenameModalVisible] = useState(false)
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false)
     const [isError, setIsError] = useState(false)
+    const fileDir = useMemo(() => new Directory(dirs[FILE_DIR]), [dirs])
 
-    useInitialEffect(() => readFiles(new Directory(dirs[FILE_DIR])))
+    useInitialEffect(() => readFiles(fileDir))
     useEffect(() => {
-        let a = setInterval(
-            () => readFiles(new Directory(dirs[FILE_DIR])),
-            2_500,
-        )
+        let a = setInterval(() => readFiles(fileDir), 10_000)
         return () => clearInterval(a)
-    }, [readFiles, dirs])
-
-    const handleRename = (item: LocalFile) => {
-        setFileTarget(item)
-        setRenameModalVisible(true)
-    }
-
-    const handleDelete = (item: LocalFile) => {
-        setFileTarget(item)
-        setDeleteModalVisible(true)
-    }
-
-    const handleShare = async (item: LocalFile) => {
-        try {
-            await shareFile(new Directory(dirs[FILE_DIR]), item.file.name)
-        } catch (e) {
-            console.log(e)
-            setIsError(true)
-        }
-    }
+    }, [readFiles, fileDir])
 
     const handleSaveRename = async (newName: string) => {
         if (!newName || !fileTarget) return
         setRenameModalVisible(false)
         setFileTarget(null)
         try {
-            await renameFile(
-                new Directory(dirs[FILE_DIR]),
-                fileTarget.file,
-                newName,
-            )
+            await renameFile(fileDir, fileTarget.file, newName)
         } catch {
             setIsError(true)
         }
-        readFiles(new Directory(dirs[FILE_DIR]))
+        readFiles(fileDir)
     }
 
     const onSetDirectory = useCallback(async () => {
@@ -87,9 +63,11 @@ export default function FilesPage() {
             const { uri } = await Directory.pickDirectoryAsync()
             const new_dirs = await initFileSystem(uri)
             change({ ...context, dirs: new_dirs })
-            await AsyncStorage.setItem(KEY_ROOT_DIR, uri)
-            await AsyncStorage.setItem(KEY_DIRS, JSON.stringify(new_dirs))
-            readFiles(new Directory(new_dirs[FILE_DIR]))
+            await AsyncStorage.multiSet([
+                [KEY_ROOT_DIR, uri],
+                [KEY_DIRS, JSON.stringify(new_dirs)],
+            ])
+            setTimeout(() => readFiles(new Directory(new_dirs[FILE_DIR])), 100)
         } catch (e) {
             console.log(e)
         }
@@ -99,13 +77,46 @@ export default function FilesPage() {
         try {
             const new_dirs = await initFileSystem(DEFAULT_ROOT_DIR)
             change({ ...context, dirs: new_dirs })
-            await AsyncStorage.setItem(KEY_ROOT_DIR, DEFAULT_ROOT_DIR)
-            await AsyncStorage.setItem(KEY_DIRS, JSON.stringify(new_dirs))
-            readFiles(new Directory(new_dirs[FILE_DIR]))
+            await AsyncStorage.multiSet([
+                [KEY_ROOT_DIR, DEFAULT_ROOT_DIR],
+                [KEY_DIRS, JSON.stringify(new_dirs)],
+            ])
+            setTimeout(() => readFiles(new Directory(new_dirs[FILE_DIR])), 100)
         } catch (e) {
             console.log(e)
         }
     }, [change, context, readFiles])
+
+    const renderItem = useCallback(
+        ({ item }: { item: LocalFile }) => (
+            <LocalFileItem
+                item={item}
+                onRename={(item: LocalFile) => {
+                    setFileTarget(item)
+                    setRenameModalVisible(true)
+                }}
+                onDelete={(item: LocalFile) => {
+                    setFileTarget(item)
+                    setDeleteModalVisible(true)
+                }}
+                onShare={async (item: LocalFile) => {
+                    try {
+                        await shareFile(fileDir, item.file.name)
+                    } catch (e) {
+                        console.log(e)
+                        setIsError(true)
+                    }
+                }}
+            />
+        ),
+        [
+            setFileTarget,
+            setRenameModalVisible,
+            setDeleteModalVisible,
+            setIsError,
+            fileDir,
+        ],
+    )
 
     return (
         <ThemedView style={{ flex: 1, paddingTop: 14 }}>
@@ -135,7 +146,7 @@ export default function FilesPage() {
                 >
                     {dirs['root'] === DEFAULT_ROOT_DIR
                         ? 'BrowserReader/' + FILE_DIR
-                        : formatDir(dirs['root'].split('tree/')[1]) + FILE_DIR}
+                        : 'Внутренняя/' + FILE_DIR}
                 </ThemedText>
                 <TouchableOpacity
                     onPress={onSetDirectory}
@@ -160,14 +171,7 @@ export default function FilesPage() {
                         На МРМ нет сохраненных файлов.
                     </ThemedText>
                 }
-                renderItem={({ item }) => (
-                    <LocalFileItem
-                        item={item}
-                        onRename={handleRename}
-                        onDelete={handleDelete}
-                        onShare={handleShare}
-                    />
-                )}
+                renderItem={renderItem}
             />
             <RenameModal
                 visible={isRenameModalVisible}
@@ -175,7 +179,7 @@ export default function FilesPage() {
                 onCancel={() => {
                     setRenameModalVisible(false)
                     setFileTarget(null)
-                    readFiles(new Directory(dirs[FILE_DIR]))
+                    readFiles(fileDir)
                 }}
                 onSave={handleSaveRename}
             />
@@ -191,7 +195,7 @@ export default function FilesPage() {
                         return
                     }
                     fileTarget.file.delete()
-                    readFiles(new Directory(dirs[FILE_DIR]))
+                    readFiles(fileDir)
                     setFileTarget(null)
                 }}
             />

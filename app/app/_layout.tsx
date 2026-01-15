@@ -51,9 +51,11 @@ export default function RootLayout() {
                 const root_dir =
                     (await AsyncStorage.getItem(KEY_ROOT_DIR)) ||
                     DEFAULT_ROOT_DIR
-                await AsyncStorage.setItem(KEY_ROOT_DIR, root_dir)
                 const dirs = await initFileSystem(root_dir)
-                await AsyncStorage.setItem(KEY_DIRS, JSON.stringify(dirs))
+                await AsyncStorage.multiSet([
+                    [KEY_ROOT_DIR, root_dir],
+                    [KEY_DIRS, JSON.stringify(dirs)],
+                ])
                 setContext({ dirs, theme: colorScheme, change })
 
                 await requestLocationPermissions()

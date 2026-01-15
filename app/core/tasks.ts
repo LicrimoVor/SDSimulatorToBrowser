@@ -23,10 +23,13 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
         console.error('Location task error:', error)
         return
     }
-    const fileName = await AsyncStorage.getItem(LOCATION_TASK_FILENAME)
-    const trackKm = await AsyncStorage.getItem(LOCATION_TASK_TRACK_KM)
-    const last_km = await AsyncStorage.getItem(LOCATION_TASK_LAST_KM)
-    const dirs = await AsyncStorage.getItem(KEY_DIRS)
+    const [[_1, fileName], [_2, trackKm], [_3, last_km], [_4, dirs]] =
+        await AsyncStorage.multiGet([
+            LOCATION_TASK_FILENAME,
+            LOCATION_TASK_TRACK_KM,
+            LOCATION_TASK_LAST_KM,
+            KEY_DIRS,
+        ])
     if (!fileName || !trackKm || !dirs) return
 
     const { locations } = data as any

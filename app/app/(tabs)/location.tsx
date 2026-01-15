@@ -10,10 +10,10 @@ import { Colors } from '@/core/theme'
 import { useInitialEffect } from '@/hooks/useInitialEffect'
 import { LocalFile, useLocalFiles } from '@/hooks/useLocalFiles'
 import { startLocationRecording, stopLocationRecording } from '@/libs/locations'
+import { shareFile } from '@/libs/share'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Directory } from 'expo-file-system'
 import { hasStartedLocationUpdatesAsync } from 'expo-location'
-import * as Sharing from 'expo-sharing'
 import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, TouchableOpacity } from 'react-native'
 
@@ -47,7 +47,7 @@ export default function LocalPage() {
             setIsLocationStarted(
                 await hasStartedLocationUpdatesAsync(LOCATION_TASK),
             )
-        }, 2_500)
+        }, 3_000)
         return () => clearInterval(id)
     }, [setIsLocationStarted, dirs, readFiles])
 
@@ -77,8 +77,9 @@ export default function LocalPage() {
 
     const handleShare = async (item: LocalFile) => {
         try {
-            await Sharing.shareAsync(item.file.uri)
-        } catch {
+            await shareFile(new Directory(dirs[LOGS_DIR]), item.file.name)
+        } catch (e) {
+            console.log(e)
             setIsError(true)
         }
     }

@@ -20,10 +20,8 @@ export function useLocalFiles() {
 
             const files = dir.listAsRecords()
             const detailed: LocalFile[] = files
-                .map(({ uri, isDirectory }) => {
-                    if (Boolean(isDirectory)) {
-                        return
-                    }
+                .filter((f) => !f.isDirectory)
+                .map(({ uri }) => {
                     const file = new File(uri)
                     const info = file.info()
 
@@ -34,7 +32,6 @@ export function useLocalFiles() {
                         modified: info.modificationTime,
                     }
                 })
-                .filter((val) => val != undefined)
                 .sort(
                     (a, b) =>
                         -(
