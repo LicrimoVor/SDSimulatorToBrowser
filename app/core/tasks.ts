@@ -23,6 +23,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
         console.error('Location task error:', error)
         return
     }
+    console.log('get track data:', data)
     const [[_1, fileName], [_2, trackKm], [_3, last_km], [_4, dirs]] =
         await AsyncStorage.multiGet([
             LOCATION_TASK_FILENAME,

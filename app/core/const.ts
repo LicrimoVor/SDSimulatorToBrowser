@@ -1,5 +1,8 @@
 import { Directory, Paths } from 'expo-file-system'
+import Constants from "expo-constants";
 
+export const AES_KEY_HEX = process.env.EXPO_PUBLIC_AES_KEY || Constants.expoConfig?.extra?.EXPO_PUBLIC_AES_KEY;
+export const AES_IV_HEX = process.env.EXPO_PUBLIC_AES_IV || Constants.expoConfig?.extra?.EXPO_PUBLIC_AES_IV;
 export const URL_API = __DEV__
     ? 'http://192.168.1.45:8000/api'
     : 'http://192.168.4.1:8000/api'
