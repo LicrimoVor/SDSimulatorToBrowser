@@ -1,70 +1,33 @@
-import asyncio
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import List
 import os
 
-app = FastAPI()
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+import uvicorn
 
-CHUNK_SIZE = 1024 * 64  # 64 KB
-DELAY = 0.1  # 0.1 сек
+from core.const import LOG_FILE, USB_MOUNT
+from utils.log_message import log_message
+from api import router
 
+app = FastAPI(
+    title="Raspberry Pi Zero USB Storage API",
+    description="API для управления USB флешкой на Raspberry Pi Zero",
+    version="1.0.0",
+)
 
-class FileInfo(BaseModel):
-    name: str
-    isDirectory: bool
-    size: int
-    lastModified: float
-
-
-async def slow_file_reader(path: str):
-    with open(path, "rb") as f:
-        while chunk := f.read(CHUNK_SIZE):
-            yield chunk
-            await asyncio.sleep(DELAY)
+app.include_router(router)
 
 
-@app.get("/api/list", response_model=List[FileInfo])
-def list_files(path: str = "."):
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="Path not found")
-
-    if not os.path.isdir(path):
-        raise HTTPException(status_code=400, detail="Path must be a directory")
-
-    print(path)
-    if path.startswith("/"):
-        print(path)
-        path = path[1:]
-
-    result = []
-    for name in os.listdir(path):
-        full_path = os.path.join(path, name)
-        stat = os.stat(full_path)
-        result.append(
-            FileInfo(
-                name=name,
-                isDirectory=os.path.isdir(full_path),
-                size=stat.st_size,
-                lastModified=stat.st_mtime,
-            )
-        )
-
-    return result
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    log_message(f"Необработанное исключение: {exc}")
+    return JSONResponse(
+        status_code=500, content={"detail": "Внутренняя ошибка сервера", "error": str(exc)}
+    )
 
 
-@app.get("/api/file")
-def get_file(path: str):
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File not found")
+if __name__ == "__main__":
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    os.makedirs(USB_MOUNT, exist_ok=True)
 
-    if os.path.isdir(path):
-        raise HTTPException(status_code=400, detail="Path is a directory")
-
-    return FileResponse(path, filename=os.path.basename(path))
-    # return StreamingResponse(
-    #     slow_file_reader(path),
-    #     media_type="application/octet-stream",
-    #     headers={"Content-Disposition": "attachment; filename=large_file.zip"},
-    # )
+    log_message("=== Запуск USB Storage API Server ===")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
